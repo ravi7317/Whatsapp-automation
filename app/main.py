@@ -95,6 +95,15 @@ async def receive_webhook(payload: dict):
     # 2. Parse the payload
     parsed_messages = parse_whatsapp_payload(payload)
     if not parsed_messages:
+        # If this is a valid Meta webhook payload (like a status/delivery update) but contains no message content,
+        # return a 200 OK to prevent Meta from retrying or flagging our webhook as broken.
+        if payload.get("object") == "whatsapp_business_account" or "entry" in payload:
+            logger.info("Acknowledging valid Meta webhook status/delivery update with 200 OK.")
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={"status": "success", "message": "Webhook acknowledged (no messages to process)"}
+            )
+            
         logger.warning("Webhook payload structure could not be parsed or contained no messages.")
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
