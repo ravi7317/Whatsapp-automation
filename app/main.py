@@ -2,7 +2,7 @@ import json
 import logging
 from typing import Dict, Any, List
 from fastapi import FastAPI, Request, Query, Response, status
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
 
 from app.config import settings
 from app.utils import parse_whatsapp_payload
@@ -178,3 +178,22 @@ async def receive_webhook(request: Request):
         status_code=status.HTTP_200_OK,
         content={"status": "success", "message": response_msg, "details": results}
     )
+
+@app.get("/privacy")
+async def privacy_policy():
+    """
+    Simple Privacy Policy page required by Meta App Review to go live.
+    """
+    html_content = """
+    <html>
+        <head>
+            <title>Privacy Policy</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <h1>Privacy Policy</h1>
+            <p>This application syncs incoming WhatsApp messages from verified users to a private Google Sheet.</p>
+            <p>We do not share, sell, or store your personal data for any purpose other than executing this sync.</p>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=status.HTTP_200_OK)
