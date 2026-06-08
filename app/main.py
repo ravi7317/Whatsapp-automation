@@ -76,19 +76,22 @@ async def verify_webhook(
     return PlainTextResponse(content="Forbidden", status_code=status.HTTP_403_FORBIDDEN)
 
 @app.post("/webhook")
-async def receive_webhook(payload: dict):
+async def receive_webhook(request: Request):
     """
     Webhook Message Receiver.
     Accepts Meta WhatsApp Business Cloud API message payload or direct mock JSON payload.
     """
     # 1. Retrieve and log the raw payload for full observability
     try:
-        logger.info("Incoming webhook payload: %s", json.dumps(payload))
+        body_bytes = await request.body()
+        body_str = body_bytes.decode("utf-8", errors="ignore")
+        logger.info("Incoming raw webhook payload: %s", body_str)
+        payload = json.loads(body_str) if body_str else {}
     except Exception as e:
-        logger.error("Failed to log payload: %s", e)
+        logger.error("Failed to parse raw webhook payload: %s", e)
         return JSONResponse(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            content={"status": "error", "message": "Invalid payload body"}
+            status_code=status.HTTP_200_OK,  # Return 200 to prevent Meta from disabling webhook
+            content={"status": "error", "message": "Invalid JSON body"}
         )
 
 
